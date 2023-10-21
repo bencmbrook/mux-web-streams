@@ -1,5 +1,5 @@
-import { HEADER_LENGTH, arrayToHeader, deserializeData } from "./helpers";
-import type { ChunkData } from "./types";
+import { arrayToHeader, deserializeData, HEADER_LENGTH } from './helpers';
+import type { ChunkData } from './types';
 
 /**
  * The chunks that demuxer receives are sometimes not the same as the chunks muxer sends...
@@ -25,7 +25,7 @@ function getMuxedChunks(chunk: Uint8Array): Uint8Array[] {
       const lastMuxedChunk = muxedChunks[muxedChunks.length - 1];
       if (!lastMuxedChunk) {
         throw new Error(
-          'Unexpectedly found a header byte before a "Start Heading" control code'
+          'Unexpectedly found a header byte before a "Start Heading" control code',
         );
       }
       lastMuxedChunk.push(byte);
@@ -35,7 +35,7 @@ function getMuxedChunks(chunk: Uint8Array): Uint8Array[] {
       const lastMuxedChunk = muxedChunks[muxedChunks.length - 1];
       if (!lastMuxedChunk) {
         throw new Error(
-          'Unexpectedly found a body byte before a "Start Heading" control code'
+          'Unexpectedly found a body byte before a "Start Heading" control code',
         );
       }
       lastMuxedChunk.push(byte);
@@ -54,10 +54,10 @@ function getMuxedChunks(chunk: Uint8Array): Uint8Array[] {
  * @returns the same array of ReadableStreams originally passed into muxer()
  */
 export const demuxer = <
-  DemuxedReadableStreams extends ReadableStream<ChunkData>[]
+  DemuxedReadableStreams extends ReadableStream<ChunkData>[],
 >(
   stream: ReadableStream<Uint8Array>,
-  numberOfStreams: number
+  numberOfStreams: number,
 ): DemuxedReadableStreams => {
   // A mapping of demuxed stream controllers, which we will use to write to and close the streams we resolved.
   const demuxedStreamControllerById: Map<
@@ -76,7 +76,7 @@ export const demuxer = <
             demuxedStreamController: newController,
           });
         },
-      })
+      }),
   );
 
   // Pipe this input stream into a WritableStream which recreates the original streams and emits them as events when they start writing
@@ -93,7 +93,7 @@ export const demuxer = <
 
           // Get this demuxed stream's controller
           const { demuxedStreamController } = demuxedStreamControllerById.get(
-            header.id
+            header.id,
           )!;
 
           if (header.end) {
@@ -118,13 +118,13 @@ export const demuxer = <
       abort(error: string) {
         const formattedError = `The demuxer stream was aborted: ${error}`;
         for (const [
-          id,
+          _,
           { demuxedStreamController },
         ] of demuxedStreamControllerById.entries()) {
           demuxedStreamController.error(formattedError);
         }
       },
-    })
+    }),
   );
 
   return demuxedReadableStreams as DemuxedReadableStreams;

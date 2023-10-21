@@ -1,9 +1,8 @@
-// tests.ts
-import * as assert from "node:assert";
-
-import { arrayToHeader, headerToArray } from "../src/helpers";
-import { demuxer, muxer } from "../src/index";
-import type { Header } from "../src/types";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { arrayToHeader, headerToArray } from '../src/helpers';
+import { demuxer, muxer } from '../src/index';
+import type { Header } from '../src/types';
 
 const createStreamFromArray = (arr: any[] | Uint8Array): ReadableStream => {
   return new ReadableStream({
@@ -30,7 +29,7 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
 };
 
 // Test header conversion functions are inverse
-(async () => {
+test('header conversion functions `headerToArray` and `arrayToHeader` are inverse', async () => {
   const header: Header = {
     id: 123,
     end: true,
@@ -41,19 +40,18 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
   const decodedHeader = arrayToHeader(encodedHeader);
 
   assert.deepStrictEqual(header, decodedHeader);
-  console.log("PASS: headerToArray / arrayToHeader are inverse");
-})();
+});
 
 // Test mux/demux equivalence
-(async () => {
+test('`mux` and `demux` are equivalent', async () => {
   // Create test data
   const originalData = [
     [1, 2, 3, 4, 5, 6, 7, 8, 9],
-    ["a", "b", "c"],
+    ['a', 'b', 'c'],
     [{ a: 1 }, { b: 2 }, { c: 3 }],
   ];
   const originalStreams = Object.values(originalData).map(
-    createStreamFromArray
+    createStreamFromArray,
   );
 
   // Mux the streams together
@@ -62,20 +60,19 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
   // Demux the stream
   const demuxedStreams = demuxer(muxedStream, originalStreams.length);
   const demuxedData = await Promise.all(
-    demuxedStreams.map((stream) => readStreamToArray(stream))
+    demuxedStreams.map((stream) => readStreamToArray(stream)),
   );
 
   // Assert that the demuxed data is equal to the original data
   assert.deepStrictEqual(demuxedData, originalData);
-  console.log("PASS: Mux / Demux are equivalent!");
-})();
+});
 
 // Test async is not blocking
-(async () => {
+test('async is not blocking - streams do not wait on slowest stream', async () => {
   // Create test data
   const originalData = [
     [1, 2, 3, 4, 5, 6, 7, 8, 9],
-    ["a", "b", "c"],
+    ['a', 'b', 'c'],
     [{ a: 1 }, { b: 2 }, { c: 3 }],
   ];
 
@@ -117,7 +114,7 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
       const timeElapsed = endTime - startTime;
       timeElapsedById[id] = timeElapsed;
       return data;
-    })
+    }),
   );
 
   // Assert the other streams have not waited on the slow stream to finish
@@ -126,5 +123,4 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
 
   // Assert that the demuxed data is equal to the original data
   assert.deepStrictEqual(demuxedData, originalData);
-  console.log("PASS: Streams do not wait on slowest stream");
-})();
+});

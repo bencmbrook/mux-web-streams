@@ -23,7 +23,7 @@ yarn add mux-web-streams
 To use `mux-web-streams`, import the desired functions from the library:
 
 ```typescript
-import { demuxer, muxer } from "mux-web-streams";
+import { demuxer, muxer } from 'mux-web-streams';
 ```
 
 ### Multiplexing streams
@@ -31,7 +31,7 @@ import { demuxer, muxer } from "mux-web-streams";
 The `muxer` function is used to multiplex an array of `ReadableStream`s into a single stream.
 
 ```typescript
-import { muxer } from "mux-web-streams";
+import { muxer } from 'mux-web-streams';
 
 // Multiplex readable streams into a single stream
 const multiplexedReadableStream: ReadableStream<Uint8Array> = muxer([
@@ -48,7 +48,7 @@ const multiplexedReadableStream: ReadableStream<Uint8Array> = muxer([
 The `demuxer` function is used to demultiplex a multiplexed stream back into the original array of `ReadableStream`s.
 
 ```typescript
-import { demuxer } from "mux-web-streams";
+import { demuxer } from 'mux-web-streams';
 
 // Demultiplex the stream and listen for emitted streams
 const [
@@ -84,7 +84,7 @@ Demultiplexes a single multiplexed `ReadableStream` into an array of `ReadableSt
 
 ```typescript
 // app/api/chat/route.ts
-import { muxer } from "mux-web-streams";
+import { muxer } from 'mux-web-streams';
 
 export async function POST(request: Request): Promise<Response> {
   // Create an array of ReadableStreams
@@ -97,9 +97,9 @@ export async function POST(request: Request): Promise<Response> {
   // Stream the result
   return new Response(multiplexedStream, {
     headers: {
-      "Content-Type": "text/event-stream",
-      Connection: "keep-alive",
-      "Cache-Control": "no-cache, no-transform",
+      'Content-Type': 'text/event-stream',
+      Connection: 'keep-alive',
+      'Cache-Control': 'no-cache, no-transform',
     },
   });
 }
@@ -108,24 +108,24 @@ export async function POST(request: Request): Promise<Response> {
 ```tsx
 // components/chat.tsx
 
-import type { ChainValues } from "langchain/schema";
-import { demuxer } from "mux-web-streams";
+import type { ChainValues } from 'langchain/schema';
+import { demuxer } from 'mux-web-streams';
 
 export const Chat = () => {
-  const [chatResponse, setChatResponse] = useState<string>("");
+  const [chatResponse, setChatResponse] = useState<string>('');
   const [chainValues, setChainValues] = useState<Record<string, any>>({});
 
   const onClick = async () => {
-    const res = await fetch("/api/chat", {
-      method: "POST",
+    const res = await fetch('/api/chat', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ myInput: 0 }),
     });
 
     if (!res.body) {
-      throw new Error("No body");
+      throw new Error('No body');
     }
 
     const [chatResponseStream, chainValuesStream] = demuxer(res.body, 2);
@@ -137,7 +137,7 @@ export const Chat = () => {
           // Update text of the most recently added element (the AI message)
           setChatResponse(chatResponse + chunk);
         },
-      })
+      }),
     );
 
     chainValuesStream.pipeTo(
@@ -145,7 +145,7 @@ export const Chat = () => {
         write(chunk) {
           setChainValues(JSON.parse(chunk));
         },
-      })
+      }),
     );
   };
 
@@ -156,7 +156,7 @@ export const Chat = () => {
       <ul>
         <li>Chat response: {chatResponse}</li>
         <li>
-          Chain values:{" "}
+          Chain values:{' '}
           <pre>
             <code>{JSON.stringify(chainValues, null, 2)}</code>
           </pre>
