@@ -37,7 +37,11 @@ export function headerToArray(header: Header): Uint8Array {
 export function arrayToHeader(array: Uint8Array): Header {
   const dv = new DataView(array.buffer);
   if (dv.byteLength < HEADER_LENGTH) {
-    console.error('Bad header', dv.buffer);
+    throw new Error(`Bad header: [${array.toString()}]`);
+  }
+
+  if (dv.getUint8(0) !== 0x01) {
+    throw new Error(`Expected header control code 0x01, got ${dv.getUint8(0)}`);
   }
 
   return {

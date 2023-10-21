@@ -1,6 +1,8 @@
 # Mux (and Demux) Web Streams
 
-`mux-web-streams` is a TypeScript library that provides utilities for multiplexing and demultiplexing (AKA "muxing" and "demuxing") streams. It allows you to combine multiple streams into a single stream and then separate them back into individual streams. It uses WHATWG-standard [Web Streams](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API), which work across [Browsers](https://caniuse.com/?search=ReadableStream), [Node](https://nodejs.org/api/webstreams.html), [Bun](https://bun.sh/docs/api/streams), [Deno](https://deno.land/api@v1.37.2?unstable=true&s=ReadableStream).
+`mux-web-streams` enables you to multiplex and demultiplex (AKA "mux" and "demux") streams. [Stream multiplexing](https://en.wikipedia.org/wiki/Multiplexing) combines multiple streams into a single stream, so that they can be sent over one communication channel, such as in a single HTTP response. Stream demultiplexing is the opposite operation – it takes a single stream and splits it into multiple streams.
+
+`mux-web-streams` uses WHATWG-standard [Web Streams](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API), which work across [Browsers](https://caniuse.com/?search=ReadableStream), [Node](https://nodejs.org/api/webstreams.html), [Bun](https://bun.sh/docs/api/streams), [Deno](https://deno.land/api@v1.37.2?unstable=true&s=ReadableStream).
 
 At [Transcend](https://transcend.io/), we use `mux-web-streams` to stream LLM responses when using [langchain](https://github.com/langchain-ai/langchainjs) on Lamdba functions with Vercel. This allows us to stream responses as they're generated, while also passing other metadata to the client, such as [ChainValues](https://js.langchain.com/docs/modules/chains/).
 
