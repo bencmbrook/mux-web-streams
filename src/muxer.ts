@@ -1,5 +1,5 @@
-import { headerToArray, serializeData } from './helpers';
-import type { ChunkData, Header } from './types';
+import { headerToArray, serializeData } from './helpers.js';
+import type { ChunkData, Header } from './types.js';
 
 /**
  * For each incoming stream, we assign an ID, a reader of that stream, and whether that stream is done

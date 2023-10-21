@@ -1,8 +1,8 @@
-import assert from 'node:assert/strict';
+import assert from 'node:assert';
 import test from 'node:test';
-import { arrayToHeader, headerToArray } from '../src/helpers';
-import { demuxer, muxer } from '../src/index';
-import type { Header } from '../src/types';
+import { arrayToHeader, headerToArray } from '../src/helpers.js';
+import { demuxer, muxer } from '../src/index.js';
+import type { Header } from '../src/types.js';
 
 const createStreamFromArray = (arr: any[] | Uint8Array): ReadableStream => {
   return new ReadableStream({

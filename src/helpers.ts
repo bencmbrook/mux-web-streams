@@ -1,4 +1,4 @@
-import type { ChunkData, Header } from './types';
+import type { ChunkData, Header } from './types.js';
 
 export const HEADER_LENGTH = 4; // bytes
 const NUMBER_OFFSET = 5;

@@ -1,7 +1,8 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": ["../tsconfig.json", "@tsconfig/node18/tsconfig"],
   "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "es2023"],
     "types": ["node"]
   },
-  "include": ["mux-web-streams.test.ts"]
+  "include": ["**/*"]
 }
