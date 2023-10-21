@@ -1,4 +1,4 @@
-import type { ChunkData, Header } from './types.js';
+import type { Header, SerializableData } from './types.js';
 
 export const HEADER_LENGTH = 4; // bytes
 const NUMBER_OFFSET = 5;
@@ -51,7 +51,7 @@ export function arrayToHeader(array: Uint8Array): Header {
 /**
  * Serialize the chunk value for the `data` portion of the byte array
  */
-export function serializeData({ value }: { value: ChunkData }): {
+export function serializeData({ value }: { value: SerializableData }): {
   data: Uint8Array;
   isRaw: boolean;
 } {
@@ -74,7 +74,7 @@ export function deserializeData({
 }: {
   data: Uint8Array;
   isRaw: boolean;
-}): { value: ChunkData } {
+}): { value: SerializableData } {
   if (isRaw) {
     return { value: data };
   }

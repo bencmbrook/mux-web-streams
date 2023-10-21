@@ -1,5 +1,5 @@
 import { arrayToHeader, deserializeData, HEADER_LENGTH } from './helpers.js';
-import type { ChunkData } from './types.js';
+import type { SerializableData } from './types.js';
 
 /**
  * The chunks that demuxer receives are sometimes not the same as the chunks muxer sends...
@@ -54,7 +54,7 @@ function getMuxedChunks(chunk: Uint8Array): Uint8Array[] {
  * @returns the same array of ReadableStreams originally passed into muxer()
  */
 export const demuxer = <
-  DemuxedReadableStreams extends ReadableStream<ChunkData>[],
+  DemuxedReadableStreams extends ReadableStream<SerializableData>[],
 >(
   stream: ReadableStream<Uint8Array>,
   numberOfStreams: number,
@@ -62,15 +62,19 @@ export const demuxer = <
   // A mapping of demuxed stream controllers, which we will use to write to and close the streams we resolved.
   const demuxedStreamControllerById: Map<
     number,
-    { demuxedStreamController: ReadableStreamDefaultController<ChunkData> }
+    {
+      demuxedStreamController: ReadableStreamDefaultController<SerializableData>;
+    }
   > = new Map();
 
   // Create an array of demuxed streams to match what was originally passed into muxer()
-  const demuxedReadableStreams: ReadableStream<ChunkData>[] = Array.from({
-    length: numberOfStreams,
-  }).map(
+  const demuxedReadableStreams: ReadableStream<SerializableData>[] = Array.from(
+    {
+      length: numberOfStreams,
+    },
+  ).map(
     (_, index) =>
-      new ReadableStream<ChunkData>({
+      new ReadableStream<SerializableData>({
         start(newController) {
           demuxedStreamControllerById.set(index, {
             demuxedStreamController: newController,

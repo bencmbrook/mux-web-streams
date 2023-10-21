@@ -59,18 +59,22 @@ readableStream0.pipeTo(/* ... */);
 
 ## API
 
-### `muxer(streams: ReadableStream[]): ReadableStream<Uint8Array>`
+### `muxer(streams: ReadableStream<SerializableData>[]): ReadableStream<Uint8Array>`
 
 Multiplexes an array of `ReadableStream`s into a single stream.
 
 - `streams`: An array of `ReadableStream`s to be multiplexed.
 
-### `demuxer(stream: ReadableStream, numberOfStreams: number): ReadableStream[]`
+### `demuxer(stream: ReadableStream, numberOfStreams: number): ReadableStream<SerializableData>[]`
 
 Demultiplexes a single multiplexed `ReadableStream` into an array of `ReadableStream`s.
 
 - `stream`: The multiplexed stream from `muxer()`.
 - `numberOfStreams`: The number of streams passed into `muxer()`.
+
+### Type `SerializableData`
+
+The `ReadableStream`s passed into `muxer()` must emit `SerializableData`. This can be a `Uint8Array`, or anything that's [deserializable from JSON](https://datatracker.ietf.org/doc/html/rfc7159#section-3), such as `string`, `number`, `boolean`, `null`, or objects and arrays composed of those primitive types.
 
 ## Examples
 

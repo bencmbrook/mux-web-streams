@@ -11,13 +11,11 @@ export type Header = {
   dataIsRaw: boolean;
 };
 
+type JSONValue = string | number | boolean | null | JSONObject | JSONArray;
+type JSONObject = { [member: string]: JSONValue };
+interface JSONArray extends Array<JSONValue> {}
+
 /**
  * Acceptable datatypes to send over the stream
  */
-export type ChunkData =
-  | null
-  | number
-  | string
-  | Record<string, any>
-  | Array<any>
-  | Uint8Array;
+export type SerializableData = JSONValue | Uint8Array;

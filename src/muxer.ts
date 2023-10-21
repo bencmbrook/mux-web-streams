@@ -1,5 +1,5 @@
 import { headerToArray, serializeData } from './helpers.js';
-import type { ChunkData, Header } from './types.js';
+import type { Header, SerializableData } from './types.js';
 
 /**
  * For each incoming stream, we assign an ID, a reader of that stream, and whether that stream is done
@@ -8,7 +8,7 @@ type Reader = {
   /** The stream's assigned ID. Equal to the stream's original position in the array passed to `muxer()` */
   id: number;
   /** The stream's reader. This is used by muxer to read chunks out of each incoming stream */
-  reader: ReadableStreamDefaultReader<unknown>;
+  reader: ReadableStreamDefaultReader<SerializableData>;
   /** Whether this stream has a pending promise. This causes it to get skipped when picking the next stream. */
   busy: boolean;
   /** Whether this stream is done. */
@@ -66,7 +66,7 @@ function serializeChunk({
   id,
   end,
   value,
-}: Omit<Header, 'dataIsRaw'> & { value: ChunkData }): Uint8Array | null {
+}: Omit<Header, 'dataIsRaw'> & { value: SerializableData }): Uint8Array | null {
   const { data, isRaw } = serializeData({ value });
 
   // No data in this chunk; skip writing anything at all
@@ -107,7 +107,7 @@ function downstreamIsReady(
  * @returns one stream
  */
 export const muxer = (
-  streams: ReadableStream<ChunkData>[],
+  streams: ReadableStream<SerializableData>[],
 ): ReadableStream<Uint8Array> => {
   // Validation
   if (streams.length === 0) {
@@ -180,19 +180,6 @@ export const muxer = (
 
           if (!result.done) {
             // This stream is not done and has a value we need to mux.
-
-            if (
-              typeof result.value !== 'object' &&
-              typeof result.value !== 'string' &&
-              typeof result.value !== 'number'
-            ) {
-              throw new Error(
-                `Unexpected type for value: ${typeof result.value}. value: ${
-                  result.value
-                }`,
-              );
-            }
-
             // Prepare the chunk for the muxed output. This serializes the data into a byte array, and prepends a metadata header.
             const byteChunk = serializeChunk({
               id,
