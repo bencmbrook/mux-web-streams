@@ -1,7 +1,9 @@
 {
-  "extends": ["@tsconfig/strictest/tsconfig", "@tsconfig/node18/tsconfig"],
+  "extends": ["@tsconfig/strictest/tsconfig"],
   "compilerOptions": {
-    "types": ["node"]
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "es6",
+    "types": []
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "test/mux-web-streams.test.ts"]
 }

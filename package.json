@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsup src/index.ts",
-    "test": "tsx src/mux-web-streams.test.ts"
+    "test": "tsx test/mux-web-streams.test.ts"
   },
   "repository": {
     "type": "git",
