@@ -1,5 +1,5 @@
-import { headerToArray, serializeData } from './helpers';
-import type { ChunkData, Header } from './types';
+import { headerToArray, serializeData } from "./helpers";
+import type { ChunkData, Header } from "./types";
 
 /**
  * For each incoming stream, we assign an ID, a reader of that stream, and whether that stream is done
@@ -26,7 +26,7 @@ type ReaderById = Record<number, Reader>;
 function getNextReader(
   readerById: ReaderById,
   lastReaderId: number
-): Reader | 'all-done' | 'all-busy' {
+): Reader | "all-done" | "all-busy" {
   const readers = Object.values(readerById);
 
   // The minimum value for the next reader ID, wrapping around to the first reader if necessary.
@@ -42,7 +42,7 @@ function getNextReader(
   }
 
   // There's no next reader... Try the current reader
-  const current = readerById[lastReaderId];
+  const current = readerById[lastReaderId]!;
   if (!current.end && !current.busy) {
     // The current stream is still going - keep going!
     return current;
@@ -50,11 +50,11 @@ function getNextReader(
 
   // Every stream finished. No need to select another reader because we're done!
   if (readers.every((reader) => reader.end)) {
-    return 'all-done';
+    return "all-done";
   }
 
   // Every stream is busy. Don't select another reader - just wait.
-  return 'all-busy';
+  return "all-busy";
 }
 
 /**
@@ -66,7 +66,7 @@ function serializeChunk({
   id,
   end,
   value,
-}: Omit<Header, 'dataIsRaw'> & { value: ChunkData }): Uint8Array | null {
+}: Omit<Header, "dataIsRaw"> & { value: ChunkData }): Uint8Array | null {
   const { data, isRaw } = serializeData({ value });
 
   // No data in this chunk; skip writing anything at all
@@ -91,10 +91,10 @@ function serializeChunk({
  * @returns whether we should write more
  */
 function downstreamIsReady(
-  desiredSize: ReadableByteStreamController['desiredSize']
+  desiredSize: ReadableByteStreamController["desiredSize"]
 ): boolean {
   if (desiredSize === null) {
-    throw new Error('Unexpected value `null` for `controller.desiredSize`.');
+    throw new Error("Unexpected value `null` for `controller.desiredSize`.");
   }
 
   return desiredSize > 0;
@@ -111,7 +111,7 @@ export const muxer = (
 ): ReadableStream<Uint8Array> => {
   // Validation
   if (streams.length === 0) {
-    throw new Error('Expected at least one stream');
+    throw new Error("Expected at least one stream");
   }
 
   // A map to help keep track of each stream's reader
@@ -144,16 +144,16 @@ export const muxer = (
         // Pick the next available stream reader
         const currentReader =
           lastReaderId === null
-            ? readerById[0]
-            : getNextReader(readerById, lastReaderId);
+            ? readerById[0]!
+            : getNextReader(readerById, lastReaderId)!;
 
         // Base case. Every stream ended. We're done muxing!
-        if (currentReader === 'all-done') {
+        if (currentReader === "all-done") {
           return controller.close();
         }
 
         // Corner case. Every stream is busy. Wait for the next call to `pull()`.
-        if (currentReader === 'all-busy') {
+        if (currentReader === "all-busy") {
           return;
         }
 
@@ -182,9 +182,9 @@ export const muxer = (
             // This stream is not done and has a value we need to mux.
 
             if (
-              typeof result.value !== 'object' &&
-              typeof result.value !== 'string' &&
-              typeof result.value !== 'number'
+              typeof result.value !== "object" &&
+              typeof result.value !== "string" &&
+              typeof result.value !== "number"
             ) {
               throw new Error(
                 `Unexpected type for value: ${typeof result.value}. value: ${
@@ -217,13 +217,13 @@ export const muxer = (
             reader.releaseLock();
 
             // Mark this incoming stream as done, so we no longer attempt to read from it.
-            readerById[id] = { ...readerById[id], end: true };
+            readerById[id] = { ...readerById[id]!, end: true };
 
             // Send one last chunk into the muxer's output to signal that this stream is done.
             const byteChunk = serializeChunk({
               id,
               end: true,
-              value: '\u0004', // arbitrarily chosen; value just needs to have length > 0 to distinguish cases
+              value: "\u0004", // arbitrarily chosen; value just needs to have length > 0 to distinguish cases
             });
             controller.enqueue(byteChunk!);
           }

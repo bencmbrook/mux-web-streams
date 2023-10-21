@@ -80,14 +80,14 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
   ];
 
   const TIMEOUT = 1000;
-  const SLOW_STREAM_TIME = TIMEOUT * originalData[1].length;
+  const SLOW_STREAM_TIME = TIMEOUT * originalData[1]!.length;
 
   const originalStreams = [
-    createStreamFromArray(originalData[0]),
+    createStreamFromArray(originalData[0]!),
     // Slow stream
     new ReadableStream({
       async start(controller) {
-        for (let item of originalData[1]) {
+        for (let item of originalData[1]!) {
           // Wait first
           await new Promise((resolve) => {
             setTimeout(() => resolve(null), TIMEOUT);
@@ -97,7 +97,7 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
         controller.close();
       },
     }),
-    createStreamFromArray(originalData[2]),
+    createStreamFromArray(originalData[2]!),
   ];
 
   const startTime = Date.now();

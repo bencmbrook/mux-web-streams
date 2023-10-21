@@ -22,11 +22,23 @@ function getMuxedChunks(chunk: Uint8Array): Uint8Array[] {
       headerBytesRemaining = HEADER_LENGTH;
     } else if (headerBytesRemaining > 0) {
       // Read more of the header into the current chunk
-      muxedChunks[muxedChunks.length - 1].push(byte);
+      const lastMuxedChunk = muxedChunks[muxedChunks.length - 1];
+      if (!lastMuxedChunk) {
+        throw new Error(
+          'Unexpectedly found a header byte before a "Start Heading" control code'
+        );
+      }
+      lastMuxedChunk.push(byte);
       headerBytesRemaining = headerBytesRemaining - 1;
     } else {
-      // This byte must the body, since we're no longer in the header.
-      muxedChunks[muxedChunks.length - 1].push(byte);
+      // This byte must be the body, since we're no longer in the header.
+      const lastMuxedChunk = muxedChunks[muxedChunks.length - 1];
+      if (!lastMuxedChunk) {
+        throw new Error(
+          'Unexpectedly found a body byte before a "Start Heading" control code'
+        );
+      }
+      lastMuxedChunk.push(byte);
     }
   });
 
