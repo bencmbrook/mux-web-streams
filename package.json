@@ -1,0 +1,40 @@
+{
+  "name": "mux-web-streams",
+  "version": "1.0.0",
+  "description": "Multiplex and demultiplex web streams.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsup src/index.ts",
+    "test": "tsx src/mux-web-streams.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bencmbrook/mux-web-streams.git"
+  },
+  "keywords": [
+    "mux",
+    "demux",
+    "multiplex",
+    "demultiplex",
+    "whatwg",
+    "web",
+    "streams"
+  ],
+  "author": "Ben Brook",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bencmbrook/mux-web-streams/issues"
+  },
+  "homepage": "https://github.com/bencmbrook/mux-web-streams#readme",
+  "devDependencies": {
+    "@tsconfig/node18": "^18.2.2",
+    "@tsconfig/strictest": "^2.0.2",
+    "@types/node": "^18.18.6",
+    "tsup": "^7.2.0",
+    "tsx": "^3.14.0",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

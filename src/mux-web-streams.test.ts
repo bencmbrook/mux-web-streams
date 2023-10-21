@@ -1,9 +1,9 @@
 // tests.ts
-import * as assert from 'node:assert';
+import * as assert from "node:assert";
 
-import { arrayToHeader, headerToArray } from './helpers';
-import { demuxer, muxer } from './index';
-import type { Header } from './types';
+import { arrayToHeader, headerToArray } from "./helpers";
+import { demuxer, muxer } from "./index";
+import type { Header } from "./types";
 
 const createStreamFromArray = (arr: any[] | Uint8Array): ReadableStream => {
   return new ReadableStream({
@@ -41,7 +41,7 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
   const decodedHeader = arrayToHeader(encodedHeader);
 
   assert.deepStrictEqual(header, decodedHeader);
-  console.log('PASS: headerToArray / arrayToHeader are inverse');
+  console.log("PASS: headerToArray / arrayToHeader are inverse");
 })();
 
 // Test mux/demux equivalence
@@ -49,7 +49,7 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
   // Create test data
   const originalData = [
     [1, 2, 3, 4, 5, 6, 7, 8, 9],
-    ['a', 'b', 'c'],
+    ["a", "b", "c"],
     [{ a: 1 }, { b: 2 }, { c: 3 }],
   ];
   const originalStreams = Object.values(originalData).map(
@@ -67,7 +67,7 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
 
   // Assert that the demuxed data is equal to the original data
   assert.deepStrictEqual(demuxedData, originalData);
-  console.log('PASS: Mux / Demux are equivalent!');
+  console.log("PASS: Mux / Demux are equivalent!");
 })();
 
 // Test async is not blocking
@@ -75,7 +75,7 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
   // Create test data
   const originalData = [
     [1, 2, 3, 4, 5, 6, 7, 8, 9],
-    ['a', 'b', 'c'],
+    ["a", "b", "c"],
     [{ a: 1 }, { b: 2 }, { c: 3 }],
   ];
 
@@ -126,5 +126,5 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
 
   // Assert that the demuxed data is equal to the original data
   assert.deepStrictEqual(demuxedData, originalData);
-  console.log('PASS: Streams do not wait on slowest stream');
+  console.log("PASS: Streams do not wait on slowest stream");
 })();

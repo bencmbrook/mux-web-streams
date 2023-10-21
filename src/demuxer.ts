@@ -1,5 +1,5 @@
-import { HEADER_LENGTH, arrayToHeader, deserializeData } from './helpers';
-import type { ChunkData } from './types';
+import { HEADER_LENGTH, arrayToHeader, deserializeData } from "./helpers";
+import type { ChunkData } from "./types";
 
 /**
  * The chunks that demuxer receives are sometimes not the same as the chunks muxer sends...
