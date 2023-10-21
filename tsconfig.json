@@ -3,7 +3,9 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "es2023"],
     "target": "es6",
-    "types": []
+    "types": [],
+    "outDir": "dist",
+    "declaration": true
   },
   "include": ["src/**/*"]
 }
