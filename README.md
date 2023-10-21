@@ -1,6 +1,6 @@
-# mux-web-streams
+# Mux (and Demux) Web Streams
 
-`mux-web-streams` is a TypeScript library that provides utilities for multiplexing and demultiplexing (AKA "muxing" and "demuxing") streams. It allows you to combine multiple streams into a single stream and then separate them back into individual streams. This works in browsers and in Node. It uses WHATWG standard [Web Streams](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API), which are also [available in Node](https://nodejs.org/api/webstreams.html).
+`mux-web-streams` is a TypeScript library that provides utilities for multiplexing and demultiplexing (AKA "muxing" and "demuxing") streams. It allows you to combine multiple streams into a single stream and then separate them back into individual streams. It uses WHATWG-standard [Web Streams](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API), which work across [Browsers](https://caniuse.com/?search=ReadableStream), [Node](https://nodejs.org/api/webstreams.html), [Bun](https://bun.sh/docs/api/streams), [Deno](https://deno.land/api@v1.37.2?unstable=true&s=ReadableStream).
 
 At [Transcend](https://transcend.io/), we use `mux-web-streams` to stream LLM responses when using [langchain](https://github.com/langchain-ai/langchainjs) on Lamdba functions with Vercel. This allows us to stream responses as they're generated, while also passing other metadata to the client, such as [ChainValues](https://js.langchain.com/docs/modules/chains/).
 
@@ -9,13 +9,7 @@ At [Transcend](https://transcend.io/), we use `mux-web-streams` to stream LLM re
 You can install `mux-web-streams` using npm:
 
 ```shell
-npm install mux-web-streams
-```
-
-or yarn:
-
-```shell
-yarn add mux-web-streams
+npm install mux-web-streams # or `pnpm` or `yarn`
 ```
 
 ## Usage
@@ -65,13 +59,13 @@ readableStream0.pipeTo(/* ... */);
 
 ## API
 
-### muxer(streams: ReadableStream<ChunkData>[]): ReadableStream<Uint8Array>
+### `muxer(streams: ReadableStream[]): ReadableStream<Uint8Array>`
 
 Multiplexes an array of `ReadableStream`s into a single stream.
 
 - `streams`: An array of `ReadableStream`s to be multiplexed.
 
-### demuxer(stream: ReadableStream, numberOfStreams: number): ReadableStream<ChunkData>[]
+### `demuxer(stream: ReadableStream, numberOfStreams: number): ReadableStream[]`
 
 Demultiplexes a single multiplexed `ReadableStream` into an array of `ReadableStream`s.
 
@@ -82,19 +76,23 @@ Demultiplexes a single multiplexed `ReadableStream` into an array of `ReadableSt
 
 ### Streaming from a Vercel function
 
+Here's an example using Langchain on Vercel functions. We want to render the AI chat completion as it comes, while also passing the chain values to the client, allowing the end-user to review the source documents behind the chatbot's answer. The chain values return the source documents that were provided to the LLM chat model using a RAG architecture. A more elaborate example might include error messages and other data.
+
+#### Server-side muxer
+
 ```typescript
 // app/api/chat/route.ts
 import { muxer } from 'mux-web-streams';
 
 export async function POST(request: Request): Promise<Response> {
-  // Create an array of ReadableStreams
+  // Get several ReadableStreams
   const chatResponseStream: ReadableStream<string> = createReadableStream();
   const chainValuesStream: ReadableStream<ChainValues> = createReadableStream();
 
   // Multiplex the streams into a single stream
   const multiplexedStream = muxer([chatResponseStream, chainValuesStream]);
 
-  // Stream the result
+  // Stream the multiplexed data
   return new Response(multiplexedStream, {
     headers: {
       'Content-Type': 'text/event-stream',
@@ -104,6 +102,8 @@ export async function POST(request: Request): Promise<Response> {
   });
 }
 ```
+
+#### Client-side demuxer
 
 ```tsx
 // components/chat.tsx
@@ -128,6 +128,7 @@ export const Chat = () => {
       throw new Error('No body');
     }
 
+    // Demultiplex the multiplexed stream
     const [chatResponseStream, chainValuesStream] = demuxer(res.body, 2);
 
     // Write generation to the UI as it comes
@@ -140,6 +141,7 @@ export const Chat = () => {
       }),
     );
 
+    // Render the chain values when they come
     chainValuesStream.pipeTo(
       new WritableStream({
         write(chunk) {

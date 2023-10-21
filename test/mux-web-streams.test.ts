@@ -1,4 +1,4 @@
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import test from 'node:test';
 import { arrayToHeader, headerToArray } from '../src/helpers.js';
 import { demuxer, muxer } from '../src/index.js';
@@ -28,6 +28,35 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
   return result;
 };
 
+// Test mux/demux equivalence
+test('`mux` and `demux` are equivalent', async () => {
+  // Create test data
+  const originalData = [
+    [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    ['a', 'b', 'c'],
+    [{ a: 1 }, { b: 2 }, { c: 3 }],
+  ];
+
+  // Create ReadableStreams from the test data
+  const originalStreams = Object.values(originalData).map(
+    createStreamFromArray,
+  );
+
+  // Mux the streams together
+  const muxedStream = muxer(originalStreams);
+
+  // Demux the stream
+  const demuxedStreams = demuxer(muxedStream, originalStreams.length);
+
+  // Read the demuxed streams back into arrays to match the shape of `originalData`
+  const demuxedData = await Promise.all(
+    demuxedStreams.map((stream) => readStreamToArray(stream)),
+  );
+
+  // Assert that the demuxed data is equal to the original data
+  assert.deepStrictEqual(demuxedData, originalData);
+});
+
 // Test header conversion functions are inverse
 test('header conversion functions `headerToArray` and `arrayToHeader` are inverse', async () => {
   const header: Header = {
@@ -40,31 +69,6 @@ test('header conversion functions `headerToArray` and `arrayToHeader` are invers
   const decodedHeader = arrayToHeader(encodedHeader);
 
   assert.deepStrictEqual(header, decodedHeader);
-});
-
-// Test mux/demux equivalence
-test('`mux` and `demux` are equivalent', async () => {
-  // Create test data
-  const originalData = [
-    [1, 2, 3, 4, 5, 6, 7, 8, 9],
-    ['a', 'b', 'c'],
-    [{ a: 1 }, { b: 2 }, { c: 3 }],
-  ];
-  const originalStreams = Object.values(originalData).map(
-    createStreamFromArray,
-  );
-
-  // Mux the streams together
-  const muxedStream = muxer(originalStreams);
-
-  // Demux the stream
-  const demuxedStreams = demuxer(muxedStream, originalStreams.length);
-  const demuxedData = await Promise.all(
-    demuxedStreams.map((stream) => readStreamToArray(stream)),
-  );
-
-  // Assert that the demuxed data is equal to the original data
-  assert.deepStrictEqual(demuxedData, originalData);
 });
 
 // Test async is not blocking
