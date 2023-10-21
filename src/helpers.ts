@@ -59,14 +59,22 @@ export function serializeData({ value }: { value: SerializableData }): {
   data: Uint8Array;
   isRaw: boolean;
 } {
+  let decodedValue;
+  let isRaw;
+
   if (value instanceof Uint8Array) {
-    // Don't transform if this is already a buffer
-    return { data: value, isRaw: true };
+    // If it's a Uint8Array, encode it as an Array for serialization
+    decodedValue = Array.from(value);
+    // And mark that it's raw in the chunk header so it can be revived in `deserializeData`
+    isRaw = true;
+  } else {
+    decodedValue = value;
+    isRaw = false;
   }
 
   const encoder = new TextEncoder();
-  const data = encoder.encode(JSON.stringify(value));
-  return { data, isRaw: false };
+  const data = encoder.encode(JSON.stringify(decodedValue));
+  return { data, isRaw };
 }
 
 /**
@@ -79,20 +87,17 @@ export function deserializeData({
   data: Uint8Array;
   isRaw: boolean;
 }): { value: SerializableData } {
-  if (isRaw) {
-    return { value: data };
-  }
+  let value;
 
   // Decode the data into the original value
   const decoder = new TextDecoder();
-  const str = decoder.decode(data);
+  const decodedValue = JSON.parse(decoder.decode(data));
 
-  // Parse JSON into an object where applicable
-  let value;
-  try {
-    value = JSON.parse(str);
-  } catch {
-    value = str;
+  if (isRaw) {
+    // If it's marked raw, then it's a Uint8Array
+    value = new Uint8Array(decodedValue);
+  } else {
+    value = decodedValue;
   }
 
   return { value };

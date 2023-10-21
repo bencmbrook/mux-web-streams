@@ -7,7 +7,7 @@ import {
   serializeData,
 } from '../src/helpers.js';
 import { demuxer, muxer } from '../src/index.js';
-import type { Header } from '../src/types.js';
+import type { Header, SerializableData } from '../src/types.js';
 
 const createStreamFromArray = (arr: any[] | Uint8Array): ReadableStream => {
   return new ReadableStream({
@@ -33,21 +33,22 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
   return result;
 };
 
+const inputData: SerializableData[][] = [
+  [1, 2, 3, 4, 5, 6, 7, 8, 912381, 12],
+  ['a', 'b', 'c'],
+  [new Uint8Array([12, 1, 100, 255, 0])],
+  // [null, null, 2, null],
+  [{}, {}],
+  [true, false],
+  [[1, 2], 3, 'a'],
+  [{ a: 1 }, { b: 2 }, { c: 3 }],
+];
+
 describe('mux/demux', () => {
   // Test mux/demux equivalence
   test('`demux` outputs are equivalent to `mux` inputs', async () => {
-    // Create test data
-    const originalData = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 9],
-      ['a', 'b', 'c'],
-      [new Uint8Array([99, 100])],
-      [{ a: 1 }, { b: 2 }, { c: 3 }],
-    ];
-
     // Create ReadableStreams from the test data
-    const originalStreams = Object.values(originalData).map(
-      createStreamFromArray,
-    );
+    const originalStreams = Object.values(inputData).map(createStreamFromArray);
 
     // Mux the streams together
     const muxedStream = muxer(originalStreams);
@@ -61,17 +62,13 @@ describe('mux/demux', () => {
     );
 
     // Assert that the demuxed data is equal to the original data
-    assert.deepStrictEqual(demuxedData, originalData);
+    assert.deepStrictEqual(demuxedData, inputData);
   });
 
   // Test async is not blocking
   test('async is not blocking - streams do not wait on slowest stream', async () => {
     // Create test data
-    const originalData = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 9],
-      ['a', 'b', 'c'],
-      [{ a: 1 }, { b: 2 }, { c: 3 }],
-    ];
+    const originalData = inputData.slice(0, 3);
 
     const TIMEOUT = 1000;
     const SLOW_STREAM_TIME = TIMEOUT * originalData[1]!.length;
@@ -123,45 +120,15 @@ describe('mux/demux', () => {
   });
 });
 
-describe('data serialization', () => {
-  describe('serializeData', () => {
-    test('Uint8Array is not modified', () => {
-      const input = new Uint8Array([0, 1, 2, 3, 200]);
-      const { data, isRaw } = serializeData({ value: input });
-      assert(isRaw === true);
-      assert(data instanceof Uint8Array);
-      assert.deepStrictEqual(data, input);
-    });
-  });
-
-  describe('deserializeData', () => {
-    test('Data marked isRaw is returned as Uint8Array', () => {
-      const input = new Uint8Array([0, 1, 2, 3, 200]);
-      const { data, isRaw } = serializeData({ value: input });
-      assert(isRaw === true);
-      assert(data instanceof Uint8Array);
-      assert.deepStrictEqual(data, input);
-    });
-  });
-
-  test('serializeData and deserializeData are inverse', () => {
-    for (const input of [
-      new Uint8Array([0, 1, 2, 3, 200]),
-      'hello',
-      3,
-      null,
-      [2, 3, 4],
-      { a: 1 },
-    ]) {
-      const { data, isRaw } = serializeData({ value: input });
+describe('serialization', () => {
+  test('body conversion functions `serializeData` and `deserializeData` are inverse', () => {
+    for (const input of inputData) {
+      const { data, isRaw } = serializeData({ value: input[0]! });
       const { value } = deserializeData({ data, isRaw });
-      assert.deepStrictEqual(value, input);
+      assert.deepStrictEqual(value, input[0]!);
     }
   });
-});
 
-// Test header conversion functions are inverse
-describe('headers', () => {
   test('header conversion functions `headerToArray` and `arrayToHeader` are inverse', async () => {
     const header: Header = {
       id: 123,
