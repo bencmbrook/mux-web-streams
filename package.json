@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build": "del dist && tsc",
-    "test": "node --loader tsx test/mux-web-streams.test.ts",
+    "test": "tsx test/mux-web-streams.test.ts",
     "test-only": "node --loader tsx --test-only test/mux-web-streams.test.ts",
     "lint:prettier": "prettier . --check",
     "prepublishOnly": "npm run build && npm run test && npm run lint:prettier"
