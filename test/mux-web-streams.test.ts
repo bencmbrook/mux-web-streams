@@ -35,13 +35,23 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
 
 const inputData: SerializableData[][] = [
   [1, 2, 3, 4, 5, 6, 7, 8, 912381, 12],
-  ['a', 'b', 'c'],
-  [new Uint8Array([12, 1, 100, 255, 0])],
-  // [null, null, 2, null],
-  [{}, {}],
-  [true, false],
-  [[1, 2], 3, 'a'],
+  ['a', 'b', 'c', 'd'],
   [{ a: 1 }, { b: 2 }, { c: 3 }],
+  [1, 2],
+  ['A'],
+  [[1, 2], 3, 'a', new Uint8Array([12, 1, 100, 255, 0])],
+  [true, false],
+  [[1, 2], 3, null, 'a'],
+  [[1, 2], 3, 'a'],
+  [[1, 2], 3, false],
+  [[1, 2], 3, 0],
+  [[1, 2], 3, []],
+  [new Uint8Array([12, 1, 100, 255, 0])],
+  [null, null, null],
+  [[1, 2], 3, 'a', {}],
+  [[1, 2], 3, null, 'a'],
+  [{}, {}],
+  [],
 ];
 
 describe('mux/demux', () => {
@@ -123,9 +133,10 @@ describe('mux/demux', () => {
 describe('serialization', () => {
   test('body conversion functions `serializeData` and `deserializeData` are inverse', () => {
     for (const input of inputData) {
+      if (input.length === 0) continue;
       const { data, isRaw } = serializeData({ value: input[0]! });
       const { value } = deserializeData({ data, isRaw });
-      assert.deepStrictEqual(value, input[0]!);
+      assert.deepStrictEqual(value, input[0]);
     }
   });
 
