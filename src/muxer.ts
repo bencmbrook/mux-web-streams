@@ -64,13 +64,8 @@ function serializeChunk({
   id,
   end,
   value,
-}: Omit<Header, 'dataIsRaw'> & { value: SerializableData }): Uint8Array | null {
+}: Omit<Header, 'dataIsRaw'> & { value: SerializableData }): Uint8Array {
   const { data, isRaw } = serializeData({ value });
-
-  // No data in this chunk; skip writing anything at all
-  if (data.length === 0) {
-    return null;
-  }
 
   // Create the header
   const header = headerToArray({
@@ -179,11 +174,8 @@ export const muxer = (
             value: result.value,
           });
 
-          // If the byteChunk is not empty (sometimes streams have empty chunks)
-          if (byteChunk !== null) {
-            // Write it to the muxed output
-            controller.enqueue(byteChunk);
-          }
+          // Write it to the muxed output
+          controller.enqueue(byteChunk);
         } else {
           // This incoming stream is finished
           // Mark this incoming stream as done, so we no longer attempt to read from it.
@@ -196,9 +188,9 @@ export const muxer = (
           const byteChunk = serializeChunk({
             id: currentReader.id,
             end: true,
-            value: '\u0004', // arbitrarily chosen; value just needs to have length > 0 to distinguish cases
+            value: 0x03, // "end of text" control code
           });
-          controller.enqueue(byteChunk!);
+          controller.enqueue(byteChunk);
         }
       })();
     },
