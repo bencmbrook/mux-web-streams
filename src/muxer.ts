@@ -46,7 +46,7 @@ function getNextReader(
   }
 
   // Filter out any readers that are busy
-  readers.filter((reader) => !reader.busy);
+  readers = readers.filter((reader) => !reader.busy);
   if (readers.length === 0) {
     return 'all-busy';
   }
@@ -186,11 +186,11 @@ export const muxer = (
           }
         } else {
           // This incoming stream is finished
-          // Release our reader's lock to the incoming stream
-          currentReader.reader.releaseLock();
-
           // Mark this incoming stream as done, so we no longer attempt to read from it.
           currentReader.end = true;
+
+          // Release our reader's lock to the incoming stream
+          currentReader.reader.releaseLock();
 
           // Send one last chunk into the muxer's output to signal that this stream is done.
           const byteChunk = serializeChunk({
@@ -205,9 +205,9 @@ export const muxer = (
 
     // Cancel incoming streams if the muxer stream is canceled.
     cancel(reason) {
-      Object.values(readerById).forEach(({ reader }) =>
-        reader.cancel(`The muxer stream was canceled: ${reason}`),
-      );
+      Object.values(readerById).forEach(({ reader }) => {
+        reader.cancel(`The muxer stream was canceled: ${reason}`);
+      });
     },
   });
 };

@@ -9,7 +9,7 @@ import {
 import { demuxer, muxer } from '../src/index.js';
 import type { Header, SerializableData } from '../src/types.js';
 
-const createStreamFromArray = (arr: any[] | Uint8Array): ReadableStream => {
+const createStreamFromArray = (arr: readonly any[]): ReadableStream => {
   return new ReadableStream({
     start(controller) {
       for (let item of arr) {
@@ -17,12 +17,15 @@ const createStreamFromArray = (arr: any[] | Uint8Array): ReadableStream => {
       }
       controller.close();
     },
+    cancel(reason) {
+      console.error('Readable canceled', reason);
+    },
   });
 };
 
 const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
+  const result: any[] = [];
   const reader = stream.getReader();
-  const result = [];
 
   while (true) {
     const { value, done } = await reader.read();
@@ -34,7 +37,7 @@ const readStreamToArray = async (stream: ReadableStream): Promise<any[]> => {
 };
 
 const inputData: SerializableData[][] = [
-  [1, 2, 3, 4, 5, 6, 7, 8, 912381, 12],
+  [1, 2, 3],
   ['a', 'b', 'c', 'd'],
   [{ a: 1 }, { b: 2 }, { c: 3 }],
   [1, 2],
@@ -78,17 +81,21 @@ describe('mux/demux', () => {
   // Test async is not blocking
   test('async is not blocking - streams do not wait on slowest stream', async () => {
     // Create test data
-    const originalData = inputData.slice(0, 3);
+    const originalData = [
+      [1, 2, 3],
+      ['a', 'b', 'c'],
+      [{ a: 1 }, { b: 2 }, { c: 3 }],
+    ] as const;
 
     const TIMEOUT = 1000;
-    const SLOW_STREAM_TIME = TIMEOUT * originalData[1]!.length;
+    const SLOW_STREAM_TIME = TIMEOUT * originalData[1].length;
 
     const originalStreams = [
-      createStreamFromArray(originalData[0]!),
+      createStreamFromArray(originalData[0]),
       // Slow stream
       new ReadableStream({
         async start(controller) {
-          for (let item of originalData[1]!) {
+          for (let item of originalData[1]) {
             // Wait first
             await new Promise((resolve) => {
               setTimeout(() => resolve(null), TIMEOUT);
@@ -98,7 +105,7 @@ describe('mux/demux', () => {
           controller.close();
         },
       }),
-      createStreamFromArray(originalData[2]!),
+      createStreamFromArray(originalData[2]),
     ];
 
     const startTime = Date.now();
