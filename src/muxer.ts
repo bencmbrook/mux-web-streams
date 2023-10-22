@@ -27,40 +27,32 @@ function getNextReader(
   readerById: ReaderById,
   lastReaderId: number,
 ): Reader | 'all-done' | 'all-busy' {
-  const readers = Object.values(readerById);
+  let readers = Object.values(readerById);
 
-  // The minimum value for the next reader ID, wrapping around to the first reader if necessary.
-  const minimumNextId = (lastReaderId + 1) % readers.length;
+  /**
+   * Slice the array so that the next candidate reader is first.
+   * e.g., if the reader IDs are `[0,1,2,3,4,5]` and the lastReaderId was `2`
+   * then the new array would be `[3,4,5,0,1,2]`
+   */
+  readers = [
+    ...readers.slice(lastReaderId + 1),
+    ...readers.slice(0, lastReaderId + 1),
+  ];
 
-  // Return the next stream reader, if there is one
-  for (const candidate of readers) {
-    if (candidate.end) continue;
-    if (candidate.busy) continue;
-    if (candidate.id >= minimumNextId) {
-      return candidate;
-    }
-  }
-
-  // There's no next reader... Try the current reader
-  const current = readerById[lastReaderId]!;
-  if (!current.end && !current.busy) {
-    // The current stream is still going - keep going!
-    return current;
-  }
-
-  // Every stream finished. No need to select another reader because we're done!
-  if (readers.every((reader) => reader.end)) {
+  // Filter out any readers that are done
+  readers = readers.filter((reader) => !reader.end);
+  if (readers.length === 0) {
     return 'all-done';
   }
 
-  for (const candidate of readers) {
-    if (candidate.end) continue;
-    if (candidate.busy) continue;
-    return candidate;
+  // Filter out any readers that are busy
+  readers.filter((reader) => !reader.busy);
+  if (readers.length === 0) {
+    return 'all-busy';
   }
 
-  // Every stream is busy or done. Don't select another reader - just wait.
-  return 'all-busy';
+  // Select the first reader in this prioritized and filtered list
+  return readers[0]!;
 }
 
 /**
