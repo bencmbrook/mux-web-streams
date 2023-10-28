@@ -160,7 +160,7 @@ export const muxer = (
        * Waiting for the response would pause reading for ALL streams.
        * Instead, we continue calling `attemptNextRead()` for streams which are available.
        */
-      (async () => {
+      (async function readSourceStream() {
         // Read a chunk from the reader
         const result = await currentReader.reader.read();
         currentReader.busy = false;
@@ -192,7 +192,9 @@ export const muxer = (
           });
           controller.enqueue(byteChunk);
         }
-      })();
+      })().catch((err) => {
+        controller.error(err);
+      });
     },
 
     // Cancel incoming streams if the muxer stream is canceled.

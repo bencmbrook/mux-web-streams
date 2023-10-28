@@ -213,3 +213,30 @@ describe('serialization', () => {
     assert.deepStrictEqual(header, decodedHeader);
   });
 });
+
+describe('error handling', async () => {
+  await test('`muxer` throwing can be handled by a client', async () => {
+    const muxedStream = muxer(
+      // Too many streams
+      Array.from({ length: 500 }).map(() => createStreamFromArray([1, 2])),
+    );
+
+    const promise = new Promise<void>((resolve, reject) => {
+      muxedStream.pipeTo(
+        new WritableStream({
+          close() {
+            resolve();
+          },
+          abort(reason) {
+            reject(reason);
+          },
+        }),
+      );
+    });
+
+    await assert.rejects(
+      promise,
+      "Error: Muxer cannot have more than 250 input streams. Stream 'id' must be a number between 0 and 250",
+    );
+  });
+});

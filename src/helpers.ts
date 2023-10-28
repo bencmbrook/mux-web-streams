@@ -13,7 +13,9 @@ const MAX_UINT8 = 2 ** 8 - 1 - NUMBER_OFFSET;
  */
 export function headerToArray(header: Header): Uint8Array {
   if (header.id > MAX_UINT8 || header.id < 0) {
-    throw Error(`stream 'id' must be a number between 0 and ${MAX_UINT8}`);
+    throw Error(
+      `Muxer cannot have more than ${MAX_UINT8} input streams. Stream 'id' must be a number between 0 and ${MAX_UINT8}`,
+    );
   }
 
   const buffer = new ArrayBuffer(HEADER_LENGTH);
