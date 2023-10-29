@@ -59,13 +59,27 @@ export const demuxer = <
   stream: ReadableStream<Uint8Array>,
   numberOfStreams: number,
 ): DemuxedReadableStreams => {
+  // Validation
+  if (!(stream instanceof ReadableStream)) {
+    throw new Error(
+      '`demuxer` expects a ReadableStream as the first argument. This should be the multiplexed stream.',
+    );
+  }
+  if (
+    typeof numberOfStreams !== 'number' ||
+    numberOfStreams <= 0 ||
+    isNaN(numberOfStreams)
+  ) {
+    throw new Error(
+      `\`demuxer\` expects a positive number of streams to demux. Received: ${numberOfStreams}`,
+    );
+  }
+
   // A mapping of demuxed stream controllers, which we will use to write to and close the streams we resolved.
-  const demuxedStreamControllerById: Map<
+  const demuxedStreamControllerById: Record<
     number,
-    {
-      demuxedStreamController: ReadableStreamDefaultController<SerializableData>;
-    }
-  > = new Map();
+    ReadableStreamDefaultController<SerializableData>
+  > = {};
 
   // Create an array of demuxed streams to match what was originally passed into muxer()
   const demuxedReadableStreams: ReadableStream<SerializableData>[] = Array.from(
@@ -76,9 +90,7 @@ export const demuxer = <
     (_, index) =>
       new ReadableStream<SerializableData>({
         start(newController) {
-          demuxedStreamControllerById.set(index, {
-            demuxedStreamController: newController,
-          });
+          demuxedStreamControllerById[index] = newController;
         },
       }),
   );
@@ -96,9 +108,8 @@ export const demuxer = <
           const header = arrayToHeader(muxedChunk);
 
           // Get this demuxed stream's controller
-          const { demuxedStreamController } = demuxedStreamControllerById.get(
-            header.id,
-          )!;
+          const demuxedStreamController =
+            demuxedStreamControllerById[header.id]!;
 
           if (header.end) {
             // If this chunk represents the end of the stream, close the controller.
@@ -121,10 +132,9 @@ export const demuxer = <
       close() {},
       abort(error: string) {
         const formattedError = `The demuxer stream was aborted: ${error}`;
-        for (const [
-          _,
-          { demuxedStreamController },
-        ] of demuxedStreamControllerById.entries()) {
+        for (const demuxedStreamController of Object.values(
+          demuxedStreamControllerById,
+        )) {
           demuxedStreamController.error(formattedError);
         }
       },
