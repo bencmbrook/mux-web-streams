@@ -143,10 +143,10 @@ test('`muxer` throwing can be handled by a client', async () => {
       .catch(reject);
   });
 
-  await assert.rejects(
-    promise,
-    "Error: Muxer cannot have more than 250 input streams. Stream 'id' must be a number between 0 and 250",
-  );
+  await assert.rejects(promise, {
+    message:
+      "Muxer cannot have more than 250 input streams. Stream 'id' must be a number between 0 and 250",
+  });
 });
 
 // Test async is not blocking
@@ -236,4 +236,48 @@ test('`muxer` gracefully handles cancels from reader', async () => {
     internalCancelMessage,
     'The muxer stream was canceled: I am no longer interested in this stream.',
   );
+});
+
+test('`demuxer` gracefully handles abort signal', async () => {
+  // Create an abort controller
+  const abortController = new AbortController();
+  const signal = abortController.signal;
+
+  // Create ReadableStreams from the test data
+  const originalStreams = Object.values(inputData).map((v) =>
+    createStreamFromArray(v),
+  );
+
+  // Mux the streams together
+  const muxedStream = muxer(originalStreams);
+
+  // Demux the stream
+  const demuxedStreams = demuxer(muxedStream, originalStreams.length, {
+    signal,
+  });
+
+  let i = 0;
+  const promise = new Promise<void>((resolve, reject) => {
+    demuxedStreams[1]!.pipeTo(
+      new WritableStream({
+        write() {
+          if (i === 1) {
+            return abortController.abort();
+          }
+          i++;
+        },
+        close() {
+          resolve();
+        },
+        abort(reason) {
+          reject(`Aborted at ${i}. ${reason}`);
+        },
+      }),
+    );
+  });
+
+  await assert.rejects(promise, (err) => {
+    assert.strictEqual(err as any, 'Aborted at 1. The demuxer was aborted.');
+    return true;
+  });
 });
