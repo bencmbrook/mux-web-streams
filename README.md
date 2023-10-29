@@ -8,11 +8,13 @@ At [Transcend](https://transcend.io/), we use `mux-web-streams` to stream LLM re
 
 ## Installation
 
-You can install `mux-web-streams` using npm:
+You can install `mux-web-streams` from [npm](https://www.npmjs.com/package/mux-web-streams):
 
 ```shell
 npm install mux-web-streams # or `pnpm` or `yarn`
 ```
+
+This package has zero dependencies.
 
 ## Usage
 
