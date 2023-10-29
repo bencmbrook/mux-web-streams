@@ -16,11 +16,7 @@ npm install mux-web-streams # or `pnpm` or `yarn`
 
 ## Usage
 
-To use `mux-web-streams`, import the desired functions from the library:
-
-```typescript
-import { demuxer, muxer } from 'mux-web-streams';
-```
+There are two functions: `muxer` and `demuxer`.
 
 ### Multiplexing streams
 
