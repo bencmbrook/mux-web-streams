@@ -82,15 +82,12 @@ function serializeChunk({
  *
  * @param desiredSize `controller.desiredSize`
  * @returns whether we should write more
+ * @see https://streams.spec.whatwg.org/#readable-stream-default-controller-get-desired-size
  */
 function downstreamIsReady(
   desiredSize: ReadableByteStreamController['desiredSize'],
 ): boolean {
-  if (desiredSize === null) {
-    throw new Error('Unexpected value `null` for `controller.desiredSize`.');
-  }
-
-  return desiredSize > 0;
+  return desiredSize !== null && desiredSize > 0;
 }
 
 /**
@@ -103,8 +100,12 @@ export const muxer = (
   streams: ReadableStream<SerializableData>[],
 ): ReadableStream<Uint8Array> => {
   // Validation
-  if (streams.length === 0) {
-    throw new Error('Expected at least one stream');
+  if (
+    !Array.isArray(streams) ||
+    streams.length === 0 ||
+    !streams.every((stream) => stream instanceof ReadableStream)
+  ) {
+    throw new Error('`muxer` expects an array of ReadableStreams');
   }
 
   // A map to help keep track of each stream's reader
@@ -120,15 +121,20 @@ export const muxer = (
     };
   });
 
+  // Keep track of the last reader
   let lastReaderId: number | null = null;
+  // Whether the muxer stream has errored. Used by `readSourceStream()` to avoid operating on the stream after a concurrent promise failed.
+  let muxerCancelled: boolean = false;
 
   // Return a new ReadableStream that pulls from the individual stream readers in a round-robin fashion.
   return new ReadableStream<Uint8Array>({
+    /**
+     * Repeatedly pick the next available stream, read a chunk from it, and add that chunk to the multiplexed output
+     * This function is triggered by calls to `pull()`
+     *
+     * @see https://streams.spec.whatwg.org/#dom-underlyingsource-pull
+     */
     async pull(controller) {
-      /**
-       * Repeatedly pick the next available stream, read a chunk from it, and add that chunk to the multiplexed output
-       * This function is triggered by `pull()` AND by recursion whenever downstream readers are ready
-       */
       if (!downstreamIsReady(controller.desiredSize)) return;
 
       // Pick the next available stream reader
@@ -147,7 +153,7 @@ export const muxer = (
         return;
       }
 
-      // Get the reader details
+      // Run case. Update the last reader ID so that we can pick the next reader on the next run time.
       lastReaderId = currentReader.id;
 
       // Mark this reader busy until `reader.read()` resolves
@@ -157,13 +163,15 @@ export const muxer = (
        * Read from this stream, asynchronously.
        *
        * Important: We don't `await` this, because `reader.read()` may be a very slow promise.
-       * Waiting for the response would pause reading for ALL streams.
-       * Instead, we continue calling `attemptNextRead()` for streams which are available.
+       * Waiting to resolve `async pull()` would pause delay the next call to `pull()`, thus pausing muxing for ALL incoming streams.
        */
       (async function readSourceStream() {
         // Read a chunk from the reader
         const result = await currentReader.reader.read();
         currentReader.busy = false;
+
+        // Since `readSourceStream()` is running concurrently, we need to check if the muxer stream has errored elsewhere.
+        if (muxerCancelled) return;
 
         if (!result.done) {
           // This stream is not done and has a value we need to mux.
@@ -193,15 +201,25 @@ export const muxer = (
           controller.enqueue(byteChunk);
         }
       })().catch((err) => {
+        // Error the muxer stream if any of the incoming streams error.
         controller.error(err);
+        // Mark the muxer stream as errored so that we don't try to read from any other incoming streams (we likely have open promises).
+        muxerCancelled = true;
       });
     },
 
     // Cancel incoming streams if the muxer stream is canceled.
-    cancel(reason) {
-      Object.values(readerById).forEach(({ reader }) => {
-        reader.cancel(`The muxer stream was canceled: ${reason}`);
-      });
+    async cancel(reason) {
+      muxerCancelled = true;
+      await Promise.all(
+        Object.values(readerById).map(async ({ reader, end }) => {
+          if (!end) {
+            await reader.cancel(
+              `The muxer stream was canceled${reason ? `: ${reason}` : '.'}`,
+            );
+          }
+        }),
+      );
     },
   });
 };
