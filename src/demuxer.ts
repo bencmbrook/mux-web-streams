@@ -58,6 +58,7 @@ export const demuxer = <
 >(
   stream: ReadableStream<Uint8Array>,
   numberOfStreams: number,
+  options?: { signal?: AbortSignal },
 ): DemuxedReadableStreams => {
   // Validation
   if (!(stream instanceof ReadableStream)) {
@@ -98,12 +99,21 @@ export const demuxer = <
   // Pipe this input stream into a WritableStream which recreates the original streams and emits them as events when they start writing
   stream.pipeTo(
     new WritableStream<Uint8Array>({
-      async write(chunk) {
+      write(chunk, controller) {
+        if (options?.signal?.aborted) {
+          Object.values(demuxedStreamControllerById).forEach(
+            (demuxedStreamController) => {
+              demuxedStreamController.error('The demuxer was aborted.');
+            },
+          );
+          return controller.error('The demuxer was aborted.');
+        }
+
         // The chunk received here may be a concatenation of multiple chunks from `muxer` (network pipes may buffer them together).
         // Split up the chunks so they match the original chunks we enqueued in `muxer`.
         const muxedChunks = getMuxedChunks(chunk);
 
-        muxedChunks.forEach((muxedChunk: Uint8Array) => {
+        for (const muxedChunk of muxedChunks) {
           // Read the header, which is a byte array of metadata prepended to the chunk
           const header = arrayToHeader(muxedChunk);
 
@@ -127,7 +137,7 @@ export const demuxer = <
             // Otherwise, enqueue the muxedChunk to the appropriate stream.
             demuxedStreamController.enqueue(value);
           }
-        });
+        }
       },
       close() {},
       abort(error: string) {
