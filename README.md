@@ -1,6 +1,6 @@
 # Mux (and Demux) Web Streams
 
-`mux-web-streams` enables you to multiplex and demultiplex (AKA "mux" and "demux") streams. [Stream multiplexing](https://en.wikipedia.org/wiki/Multiplexing) combines multiple streams into a single stream, so that they can be sent over one communication channel, such as in a single HTTP response. Stream demultiplexing is the opposite operation – it takes a single stream and splits it into multiple streams.
+`mux-web-streams` enables you to multiplex and demultiplex (AKA "mux" and "demux") streams. [Stream multiplexing](https://en.wikipedia.org/wiki/Multiplexing) combines multiple streams into a single stream, so that they can be sent over one communication channel, such as in a single HTTP response. Stream demultiplexing is the opposite operation – it takes a single stream and splits it into the original set of streams.
 
 `mux-web-streams` uses WHATWG-standard [Web Streams](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API), which work across [Browsers](https://caniuse.com/?search=ReadableStream), [Node](https://nodejs.org/api/webstreams.html), [Bun](https://bun.sh/docs/api/streams), [Deno](https://deno.land/api@v1.37.2?unstable=true&s=ReadableStream).
 
