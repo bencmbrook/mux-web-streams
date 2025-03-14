@@ -4,8 +4,6 @@
 
 `mux-web-streams` uses WHATWG-standard [Web Streams](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API), which work across [Browsers](https://caniuse.com/?search=ReadableStream), [Node](https://nodejs.org/api/webstreams.html), [Bun](https://bun.sh/docs/api/streams), [Deno](https://deno.land/api@v1.37.2?unstable=true&s=ReadableStream).
 
-At [Transcend](https://transcend.io/), we use `mux-web-streams` to stream LLM responses when using [langchain](https://github.com/langchain-ai/langchainjs) on Lamdba functions with Vercel. This allows us to stream responses as they're generated, while also passing other metadata to the client, such as [ChainValues](https://js.langchain.com/docs/modules/chains/).
-
 ## Installation
 
 You can install `mux-web-streams` from [npm](https://www.npmjs.com/package/mux-web-streams):
